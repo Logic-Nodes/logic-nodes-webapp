@@ -21,7 +21,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={id}
           className={cn(
-            'w-full rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-sm text-white',
+            'w-full rounded-xl border border-white/10 bg-slate-900 px-3.5 py-2.5 text-sm text-white appearance-none',
             'focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors',
             'disabled:opacity-50 disabled:cursor-not-allowed',
             error && 'border-red-500 focus:ring-red-500',
@@ -29,9 +29,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           )}
           {...props}
         >
-          {placeholder && <option value="">{placeholder}</option>}
+          {placeholder && <option value="" style={{ backgroundColor: '#0f172a', color: '#fff' }}>{placeholder}</option>}
           {options.map(opt => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
+            <option key={opt.value} value={opt.value} style={{ backgroundColor: '#0f172a', color: '#fff' }}>{opt.label}</option>
           ))}
         </select>
         {error && <p className="text-xs text-red-400">{error}</p>}
