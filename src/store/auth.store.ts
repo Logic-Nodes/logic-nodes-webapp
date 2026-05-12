@@ -14,6 +14,7 @@ interface AuthState {
   isAdmin: () => boolean
   isOperator: () => boolean
   isDriver: () => boolean
+  isCustomer: () => boolean
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -59,4 +60,5 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isAdmin: () => get().user?.roles.includes('ADMIN') ?? false,
   isOperator: () => get().user?.roles.includes('OPERATOR') ?? false,
   isDriver: () => get().user?.roles.includes('DRIVER') ?? false,
+  isCustomer: () => get().user?.roles.includes('CUSTOMER') ?? false,
 }))

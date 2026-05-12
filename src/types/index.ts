@@ -18,6 +18,11 @@ export interface Vehicle {
   id: number;
   plate: string;
   type: VehicleType;
+  brand: string | null;
+  model: string | null;
+  year: number | null;
+  cargoCapacityKg: number | null;
+  driverName: string | null;
   capabilities: string[] | null;
   status: VehicleStatus;
   odometerKm: number;
@@ -27,6 +32,11 @@ export interface Vehicle {
 export interface CreateVehicleDto {
   plate: string;
   type: string;
+  brand?: string | null;
+  model?: string | null;
+  year?: number | null;
+  cargoCapacityKg?: number | null;
+  driverName?: string | null;
   capabilities: string[];
   status: string;
   odometerKm: number;

@@ -23,7 +23,7 @@ function NavItem({ to, icon, label }: { to: string; icon: React.ReactNode; label
 }
 
 export function Sidebar() {
-  const { user, logout, isAdmin, isOperator } = useAuthStore()
+  const { user, logout, isAdmin, isOperator, isCustomer } = useAuthStore()
   const navigate = useNavigate()
   const canSeeAdmin = isAdmin() || isOperator()
 
@@ -68,7 +68,7 @@ export function Sidebar() {
         {/* Section: ACCOUNT */}
         <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 px-3 pt-4 pb-1">Account</p>
         <NavItem to="/profile" icon={<User size={16} />} label="Profile" />
-        {canSeeAdmin && <NavItem to="/subscriptions" icon={<CreditCard size={16} />} label="Subscriptions" />}
+        {(canSeeAdmin || isCustomer()) && <NavItem to="/subscriptions" icon={<CreditCard size={16} />} label="Subscriptions" />}
       </nav>
 
       {/* Footer - user info */}

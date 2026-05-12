@@ -54,6 +54,11 @@ const STATUS_LABEL: Record<string, string> = {
 interface VehicleFormData {
   plate: string
   type: string
+  brand: string
+  model: string
+  year: number
+  cargoCapacityKg: number
+  driverName: string
   odometerKm: number
   capabilities: string[]
 }
@@ -151,15 +156,22 @@ function VehicleSlideOver({ open, onClose, vehicle }: { open: boolean; onClose: 
   const [loading, setLoading] = useState(false)
 
   const { register, handleSubmit, control, reset, formState: { errors } } = useForm<VehicleFormData>({
-    defaultValues: { plate: '', type: 'TRUCK', odometerKm: 0, capabilities: [] },
+    defaultValues: { plate: '', type: 'TRUCK', brand: '', model: '', year: new Date().getFullYear(), cargoCapacityKg: 0, driverName: '', odometerKm: 0, capabilities: [] },
   })
 
   useEffect(() => {
     if (open) {
       reset(
         vehicle
-          ? { plate: vehicle.plate, type: vehicle.type, odometerKm: vehicle.odometerKm ?? 0, capabilities: vehicle.capabilities ?? [] }
-          : { plate: '', type: 'TRUCK', odometerKm: 0, capabilities: [] }
+          ? {
+              plate: vehicle.plate, type: vehicle.type,
+              brand: vehicle.brand ?? '', model: vehicle.model ?? '',
+              year: vehicle.year ?? new Date().getFullYear(),
+              cargoCapacityKg: vehicle.cargoCapacityKg ?? 0,
+              driverName: vehicle.driverName ?? '',
+              odometerKm: vehicle.odometerKm ?? 0, capabilities: vehicle.capabilities ?? [],
+            }
+          : { plate: '', type: 'TRUCK', brand: '', model: '', year: new Date().getFullYear(), cargoCapacityKg: 0, driverName: '', odometerKm: 0, capabilities: [] }
       )
     }
   }, [open, vehicle, reset])
@@ -170,6 +182,11 @@ function VehicleSlideOver({ open, onClose, vehicle }: { open: boolean; onClose: 
       const dto: CreateVehicleDto = {
         plate: data.plate,
         type: data.type,
+        brand: data.brand || null,
+        model: data.model || null,
+        year: Number(data.year) || null,
+        cargoCapacityKg: Number(data.cargoCapacityKg) || null,
+        driverName: data.driverName || null,
         capabilities: data.capabilities,
         status: vehicle?.status ?? 'IN_SERVICE',
         odometerKm: Number(data.odometerKm),
@@ -202,22 +219,59 @@ function VehicleSlideOver({ open, onClose, vehicle }: { open: boolean; onClose: 
     >
       <form id="vehicle-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <Input
-          label="Plate"
+          label="Placa"
           id="plate"
-          placeholder="e.g. ABC-123"
+          placeholder="ej. ABC-123"
           error={errors.plate?.message}
-          {...register('plate', { required: 'Plate is required' })}
+          {...register('plate', { required: 'La placa es requerida' })}
         />
         <Controller
           name="type"
           control={control}
-          rules={{ required: 'Type is required' }}
+          rules={{ required: 'El tipo es requerido' }}
           render={({ field }) => (
-            <Select label="Type" id="type" options={TYPE_OPTIONS} error={errors.type?.message} {...field} />
+            <Select label="Tipo de vehículo" id="type" options={TYPE_OPTIONS} error={errors.type?.message} {...field} />
           )}
         />
+        <div className="grid grid-cols-2 gap-3">
+          <Input
+            label="Marca"
+            id="brand"
+            placeholder="ej. Mercedes"
+            {...register('brand')}
+          />
+          <Input
+            label="Modelo"
+            id="model"
+            placeholder="ej. Atego 1726"
+            {...register('model')}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Input
+            label="Año"
+            id="year"
+            type="number"
+            min={1990}
+            max={new Date().getFullYear() + 1}
+            {...register('year', { valueAsNumber: true })}
+          />
+          <Input
+            label="Capacidad de carga (kg)"
+            id="cargoCapacityKg"
+            type="number"
+            min={0}
+            {...register('cargoCapacityKg', { valueAsNumber: true })}
+          />
+        </div>
         <Input
-          label="Odometer (km)"
+          label="Conductor asignado"
+          id="driverName"
+          placeholder="ej. Juan Pérez"
+          {...register('driverName')}
+        />
+        <Input
+          label="Odómetro (km)"
           id="odometerKm"
           type="number"
           min={0}

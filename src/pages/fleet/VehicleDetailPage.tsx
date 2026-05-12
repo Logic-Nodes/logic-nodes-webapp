@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { ArrowLeft, Cpu, Gauge, Wrench, Tag } from 'lucide-react'
+import { ArrowLeft, Cpu, Gauge, Wrench, Tag, Calendar, Weight, User } from 'lucide-react'
 import { useFleetStore } from '@/store/fleet.store'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -181,12 +181,62 @@ export function VehicleDetailPage() {
                 </div>
               </div>
 
+              {(vehicle.brand || vehicle.model) && (
+                <div className="flex items-start gap-3">
+                  <div className="rounded-lg bg-brand-500/10 p-2 mt-0.5">
+                    <Tag size={16} className="text-brand-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Marca / Modelo</p>
+                    <p className="text-white font-medium mt-0.5">
+                      {[vehicle.brand, vehicle.model].filter(Boolean).join(' ')}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {vehicle.year && (
+                <div className="flex items-start gap-3">
+                  <div className="rounded-lg bg-brand-500/10 p-2 mt-0.5">
+                    <Calendar size={16} className="text-brand-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Año</p>
+                    <p className="text-white font-medium mt-0.5">{vehicle.year}</p>
+                  </div>
+                </div>
+              )}
+
+              {vehicle.cargoCapacityKg != null && (
+                <div className="flex items-start gap-3">
+                  <div className="rounded-lg bg-brand-500/10 p-2 mt-0.5">
+                    <Weight size={16} className="text-brand-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Capacidad de carga</p>
+                    <p className="text-white font-medium mt-0.5">{vehicle.cargoCapacityKg.toLocaleString()} kg</p>
+                  </div>
+                </div>
+              )}
+
+              {vehicle.driverName && (
+                <div className="flex items-start gap-3">
+                  <div className="rounded-lg bg-brand-500/10 p-2 mt-0.5">
+                    <User size={16} className="text-brand-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Conductor asignado</p>
+                    <p className="text-white font-medium mt-0.5">{vehicle.driverName}</p>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-start gap-3">
                 <div className="rounded-lg bg-brand-500/10 p-2 mt-0.5">
                   <Gauge size={16} className="text-brand-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Odometer</p>
+                  <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Odómetro</p>
                   <p className="text-white font-medium mt-0.5">
                     {vehicle.odometerKm != null ? `${vehicle.odometerKm.toLocaleString()} km` : '—'}
                   </p>

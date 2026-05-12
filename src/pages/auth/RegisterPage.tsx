@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Eye, EyeOff, MapPin, ArrowRight } from 'lucide-react'
+import { Eye, EyeOff, MapPin, ArrowRight, Building2, User } from 'lucide-react'
 import { useAuthStore } from '@/store/auth.store'
 
-type Role = 'ADMIN' | 'OPERATOR' | 'DRIVER'
+type AccountType = 'personal' | 'company'
+type Role = 'ADMIN' | 'OPERATOR' | 'DRIVER' | 'CUSTOMER'
 
 interface RegisterFormValues {
   firstName: string
@@ -13,13 +14,11 @@ interface RegisterFormValues {
   email: string
   password: string
   role: Role
+  accountType: AccountType
+  companyName: string
+  companyRuc: string
+  companyAddress: string
 }
-
-const ROLE_OPTIONS: { value: Role; label: string }[] = [
-  { value: 'ADMIN', label: 'Administrador' },
-  { value: 'OPERATOR', label: 'Operador' },
-  { value: 'DRIVER', label: 'Conductor' },
-]
 
 const inputClass =
   'w-full rounded-xl bg-white/5 border border-white/10 px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] transition-colors'
@@ -30,18 +29,39 @@ export function RegisterPage() {
   const navigate = useNavigate()
   const { signUp, loading } = useAuthStore()
   const [showPassword, setShowPassword] = useState(false)
+  const [accountType, setAccountType] = useState<AccountType>('personal')
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<RegisterFormValues>({
-    defaultValues: { firstName: '', lastName: '', email: '', password: '', role: 'OPERATOR' },
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      role: 'CUSTOMER',
+      accountType: 'personal',
+      companyName: '',
+      companyRuc: '',
+      companyAddress: '',
+    },
   })
 
   const onSubmit = async (data: RegisterFormValues) => {
     try {
-      await signUp(data.email, data.password, { firstName: data.firstName, lastName: data.lastName }, [data.role])
+      const role: Role = accountType === 'company' ? 'OPERATOR' : 'CUSTOMER'
+      const extraData: Record<string, unknown> = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+      }
+      if (accountType === 'company') {
+        extraData.companyName = data.companyName
+        extraData.companyRuc = data.companyRuc
+        extraData.companyAddress = data.companyAddress
+      }
+      await signUp(data.email, data.password, extraData as { firstName: string; lastName: string }, [role])
       toast.success('¡Cuenta creada! Inicia sesión.')
       navigate('/login')
     } catch (err: unknown) {
@@ -55,7 +75,6 @@ export function RegisterPage() {
       className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden"
       style={{ background: 'linear-gradient(135deg, #0F172A 0%, #0F1E3A 50%, #0F172A 100%)' }}
     >
-      {/* Background decoration */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#2563EB] rounded-full opacity-10 blur-3xl" />
         <div className="absolute -bottom-40 -left-20 w-[500px] h-[500px] bg-[#2563EB] rounded-full opacity-[0.07] blur-3xl" />
@@ -69,7 +88,6 @@ export function RegisterPage() {
       </div>
 
       <div className="relative w-full max-w-sm">
-        {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <div className="h-12 w-12 rounded-2xl bg-[#2563EB] flex items-center justify-center mb-4 shadow-lg shadow-[#2563EB]/30">
             <MapPin size={22} className="text-white" />
@@ -78,10 +96,37 @@ export function RegisterPage() {
           <p className="text-sm text-slate-400 mt-1">Fleet Intelligence Platform</p>
         </div>
 
-        {/* Card */}
         <div className="bg-white/[0.05] backdrop-blur-sm border border-white/10 rounded-2xl p-8 shadow-2xl">
           <h2 className="text-xl font-semibold text-white mb-1">Crear cuenta</h2>
           <p className="text-sm text-slate-400 mb-6">Únete a OmniTrack y gestiona tu flota</p>
+
+          {/* Account type toggle */}
+          <div className="grid grid-cols-2 gap-2 mb-6">
+            <button
+              type="button"
+              onClick={() => setAccountType('personal')}
+              className={`flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
+                accountType === 'personal'
+                  ? 'bg-[#2563EB] text-white shadow-lg shadow-[#2563EB]/20'
+                  : 'bg-white/5 border border-white/10 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <User size={15} />
+              Cliente Final
+            </button>
+            <button
+              type="button"
+              onClick={() => setAccountType('company')}
+              className={`flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
+                accountType === 'company'
+                  ? 'bg-[#2563EB] text-white shadow-lg shadow-[#2563EB]/20'
+                  : 'bg-white/5 border border-white/10 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Building2 size={15} />
+              Shipping Company
+            </button>
+          </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             <div className="grid grid-cols-2 gap-3">
@@ -106,6 +151,39 @@ export function RegisterPage() {
                 {errors.lastName && <p className="text-xs text-red-400">{errors.lastName.message}</p>}
               </div>
             </div>
+
+            {accountType === 'company' && (
+              <>
+                <div className="space-y-1.5">
+                  <label className={labelClass}>Nombre de la empresa</label>
+                  <input
+                    placeholder="Transportes S.A.C."
+                    className={inputClass}
+                    {...register('companyName', { required: accountType === 'company' ? 'Requerido' : false })}
+                  />
+                  {errors.companyName && <p className="text-xs text-red-400">{errors.companyName.message}</p>}
+                </div>
+                <div className="space-y-1.5">
+                  <label className={labelClass}>RUC</label>
+                  <input
+                    placeholder="20123456789"
+                    maxLength={11}
+                    className={inputClass}
+                    {...register('companyRuc', { required: accountType === 'company' ? 'Requerido' : false })}
+                  />
+                  {errors.companyRuc && <p className="text-xs text-red-400">{errors.companyRuc.message}</p>}
+                </div>
+                <div className="space-y-1.5">
+                  <label className={labelClass}>Dirección de la empresa</label>
+                  <input
+                    placeholder="Av. Principal 123, Lima"
+                    className={inputClass}
+                    {...register('companyAddress', { required: accountType === 'company' ? 'Requerido' : false })}
+                  />
+                  {errors.companyAddress && <p className="text-xs text-red-400">{errors.companyAddress.message}</p>}
+                </div>
+              </>
+            )}
 
             <div className="space-y-1.5">
               <label className={labelClass}>Correo electrónico</label>
@@ -145,22 +223,6 @@ export function RegisterPage() {
                 </button>
               </div>
               {errors.password && <p className="text-xs text-red-400">{errors.password.message}</p>}
-            </div>
-
-            <div className="space-y-1.5">
-              <label className={labelClass}>Rol</label>
-              <select
-                className={inputClass + ' appearance-none'}
-                style={{ colorScheme: 'dark' }}
-                {...register('role', { required: 'Rol requerido' })}
-              >
-                {ROLE_OPTIONS.map(opt => (
-                  <option key={opt.value} value={opt.value} className="bg-slate-800 text-white">
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              {errors.role && <p className="text-xs text-red-400">{errors.role.message}</p>}
             </div>
 
             <button

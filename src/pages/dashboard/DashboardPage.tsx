@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
-import { Truck, Bell, AlertTriangle, Activity, ArrowRight, Package } from 'lucide-react'
+import { Truck, Bell, AlertTriangle, Activity, ArrowRight, Package, Thermometer, Wifi, WifiOff } from 'lucide-react'
 import { dashboardApi } from '@/api/dashboard.api'
 import type { DashboardTrip, DashboardAlert, IncidentsByMonth } from '@/types'
 import { useFleetStore } from '@/store/fleet.store'
+import { useLiveTemperature } from '@/hooks/useLiveTemperature'
 import { Card, CardHeader, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { cn } from '@/utils/cn'
@@ -57,6 +58,7 @@ export function DashboardPage() {
 
   const [period, setPeriod] = useState('12m')
   const [alertTypeFilter, setAlertTypeFilter] = useState<'ALL' | 'TEMPERATURE' | 'MOVEMENT'>('ALL')
+  const { readings: liveReadings, loading: liveLoading } = useLiveTemperature(8000)
 
   useEffect(() => {
     Promise.all([
@@ -248,6 +250,83 @@ export function DashboardPage() {
                 )}
               </AreaChart>
             </ResponsiveContainer>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Real-time Temperature Monitoring */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Thermometer size={18} className="text-[#3B82F6]" />
+              <h2 className="text-base font-semibold text-white">Temperatura en Tiempo Real</h2>
+              <span className="flex items-center gap-1 text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                En vivo
+              </span>
+            </div>
+            <span className="text-xs text-slate-500">Actualiza cada 8s</span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {liveLoading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-24 bg-white/5 animate-pulse rounded-xl" />
+              ))}
+            </div>
+          ) : liveReadings.length === 0 ? (
+            <div className="flex items-center gap-3 text-slate-500 text-sm py-4">
+              <WifiOff size={16} />
+              No hay dispositivos IoT en línea
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {liveReadings.map(reading => {
+                const isAlert = reading.status === 'ALERT'
+                const pct = Math.min(100, Math.max(0, ((reading.temperature - reading.minTemperature) / (reading.maxTemperature - reading.minTemperature)) * 100))
+                return (
+                  <div
+                    key={reading.deviceId}
+                    className={cn(
+                      'rounded-xl border p-4 transition-all',
+                      isAlert
+                        ? 'border-red-500/40 bg-red-500/10'
+                        : 'border-white/10 bg-white/[0.04]'
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-mono text-slate-400 truncate max-w-[70px]">
+                        {reading.vehiclePlate ?? reading.imei.slice(-6)}
+                      </span>
+                      {isAlert
+                        ? <AlertTriangle size={12} className="text-red-400 shrink-0" />
+                        : <Wifi size={12} className="text-emerald-400 shrink-0" />
+                      }
+                    </div>
+                    <p className={cn(
+                      'text-2xl font-bold tabular-nums',
+                      isAlert ? 'text-red-400' : 'text-white'
+                    )}>
+                      {reading.temperature > 0 ? '+' : ''}{reading.temperature}°C
+                    </p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Rango: {reading.minTemperature}° / {reading.maxTemperature}°C
+                    </p>
+                    <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                      <div
+                        className={cn(
+                          'h-full rounded-full transition-all duration-1000',
+                          isAlert ? 'bg-red-500' : 'bg-[#3B82F6]'
+                        )}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           )}
         </CardContent>
       </Card>

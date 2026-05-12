@@ -146,7 +146,7 @@ export function LoginPage() {
         <p className="text-center text-sm text-slate-500 mt-6">
           ¿No tienes cuenta?{' '}
           <Link to="/register" className="text-[#2563EB] hover:text-[#93C5FD] font-medium transition-colors">
-            Crear cuenta
+            Sign up here
           </Link>
         </p>
       </div>

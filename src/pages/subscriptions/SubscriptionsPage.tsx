@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Check } from 'lucide-react'
+import { Check, FileText, Calendar, CreditCard, ArrowUpCircle, Bell } from 'lucide-react'
 import { useAuthStore } from '@/store/auth.store'
 import { billingApi } from '@/api/billing.api'
 import type { Plan, Payment, Subscription } from '@/types'
@@ -58,6 +58,8 @@ export function SubscriptionsPage() {
   const [cancelModalOpen, setCancelModalOpen] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [changingPlan, setChangingPlan] = useState<number | null>(null)
+  const [receiptPlan, setReceiptPlan] = useState<Plan | null>(null)
+  const [receiptDate, setReceiptDate] = useState<string>('')
 
   useEffect(() => {
     if (!user) return
@@ -97,7 +99,9 @@ export function SubscriptionsPage() {
     try {
       const updated = await billingApi.changePlan(subscription.id, planId)
       setSubscription(updated)
-      toast.success('Plan changed successfully')
+      setReceiptPlan(updated.plan)
+      setReceiptDate(new Date().toISOString())
+      toast.success('Plan actualizado correctamente')
     } catch {
       toast.error('Failed to change plan')
     } finally {
@@ -128,11 +132,30 @@ export function SubscriptionsPage() {
     },
   ]
 
+  const renewalDaysLeft = subscription?.renewal
+    ? Math.ceil((new Date(subscription.renewal).getTime() - Date.now()) / 86400000)
+    : null
+
   if (!user) return null
 
   return (
     <div className="p-6 space-y-8">
       <h1 className="text-2xl font-bold text-white">Subscriptions</h1>
+
+      {/* Renewal warning banner (US041) */}
+      {!loading && subscription && subscription.status === 'ACTIVE' && renewalDaysLeft !== null && renewalDaysLeft <= 7 && renewalDaysLeft >= 0 && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+          <Bell size={16} className="text-amber-400 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-amber-300">
+              Tu suscripción renueva en {renewalDaysLeft === 0 ? 'hoy' : `${renewalDaysLeft} día${renewalDaysLeft === 1 ? '' : 's'}`}
+            </p>
+            <p className="text-xs text-amber-400/80 mt-0.5">
+              Si deseas cancelar o cambiar de plan, hazlo antes del {formatDate(subscription.renewal)}.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Plan Actual */}
       <section className="space-y-3">
@@ -298,6 +321,66 @@ export function SubscriptionsPage() {
             </Button>
           </div>
         </div>
+      </Modal>
+
+      {/* Receipt modal after plan upgrade */}
+      <Modal
+        open={!!receiptPlan}
+        onClose={() => setReceiptPlan(null)}
+        title="Recibo de Suscripción"
+        size="sm"
+      >
+        {receiptPlan && subscription && (
+          <div className="space-y-5">
+            <div className="flex items-center justify-center">
+              <div className="h-14 w-14 rounded-full bg-emerald-500/15 flex items-center justify-center">
+                <ArrowUpCircle size={28} className="text-emerald-400" />
+              </div>
+            </div>
+            <div className="text-center">
+              <p className="text-base font-semibold text-white">Plan actualizado a {receiptPlan.name}</p>
+              <p className="text-sm text-slate-400 mt-1">Tu suscripción ha sido activada exitosamente</p>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-xl divide-y divide-white/10">
+              <div className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center gap-2 text-slate-400">
+                  <FileText size={15} />
+                  <span className="text-sm">Plan</span>
+                </div>
+                <span className="text-sm font-semibold text-white">{receiptPlan.name}</span>
+              </div>
+              <div className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center gap-2 text-slate-400">
+                  <CreditCard size={15} />
+                  <span className="text-sm">Monto cobrado</span>
+                </div>
+                <span className="text-sm font-semibold text-white">${receiptPlan.price}/mes</span>
+              </div>
+              <div className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center gap-2 text-slate-400">
+                  <Calendar size={15} />
+                  <span className="text-sm">Fecha de activación</span>
+                </div>
+                <span className="text-sm font-semibold text-white">
+                  {new Date(receiptDate).toLocaleDateString('es-PE', { year: 'numeric', month: 'short', day: 'numeric' })}
+                </span>
+              </div>
+              <div className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center gap-2 text-slate-400">
+                  <Calendar size={15} />
+                  <span className="text-sm">Próxima renovación</span>
+                </div>
+                <span className="text-sm font-semibold text-white">{formatDate(subscription.renewal)}</span>
+              </div>
+            </div>
+            <p className="text-xs text-center text-slate-500">
+              Se ha enviado un recibo de confirmación a tu correo electrónico.
+            </p>
+            <Button variant="primary" className="w-full" onClick={() => setReceiptPlan(null)}>
+              Entendido
+            </Button>
+          </div>
+        )}
       </Modal>
     </div>
   )
